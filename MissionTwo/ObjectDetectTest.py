@@ -1,15 +1,14 @@
-
 import cv2
 import numpy as np
 
-net = cv2.dnn.readNet("yolov4-tiny.weights", "yolov4-tiny-custom.cfg")
+net = cv2.dnn.readNet("Data/yolov4-tiny.weights", "Data/yolov4-tiny-custom.cfg")
 
 clasees = []
-with open("obj.names", 'r') as f:
+with open("Data/obj.names", 'r') as f:
     clasees = [line.strip() for line in f.readlines()]
 
 
-cap = cv2.imread("images/circle (28).jpg")
+cap = cv2.imread("Data/imagesOld/circle (28).jpg")
 scale_percent = 60  # percent of original size
 width = int(cap.shape[1] * scale_percent / 100)
 height = int(cap.shape[0] * scale_percent / 100)
