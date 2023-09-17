@@ -46,6 +46,13 @@ class Dolunay():
         pass
 
     def  hareket_et(self, x, y, z, r,t):
+        """
+        x- ileri ve geri hareket,[-1000,1000] araligi(0 degeri hareket vermez)
+        y- saga ve sola hareket,[-1000,1000] araligi(0 degeri hareket vermez)
+        z- yukari ve asagi hareket,[-1000,1000] araligi(500 degeri hareket vermez)
+        r- kendi etrafinda saga ve sola hareket,[-1000,1000] araligi(0 degeri hareket vermez)
+        t- hareketin kac saniye islecegi
+        """
         # t kac saniye hareketi yapacagi
         while(True):
             self.master.mav.manual_control_send(
@@ -65,65 +72,11 @@ class Dolunay():
         #duzenlecek
         return
 
-    def get_yaw_roll_pitch_rad(self):
-        """
-        Sirasiyla yaw roll pitch degerlerini radyan cinsinden verir.
-        """
-        self.master.mav.command_long_send(self.master.target_system, self.master.target_component,
-                                          mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
-                                          0,
-                                          30, 0, 0, 0, 0, 0, 0)
-        attitude = self.master.recv_match(type='ATTITUDE', blocking=True)
-        return [attitude.yaw, attitude.roll, attitude.pitch]
-
-    def get_yaw_roll_pitch_deg(self):
-        """
-        Sirasiyla yaw, yaw hizi, roll, roll hizi, pitch, pitch hizi degerlerini derece ve derece/saniye cinsinden verir.
-        """
-        self.master.mav.command_long_send(self.master.target_system, self.master.target_component,
-                                          mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
-                                          0,
-                                          30, 0, 0, 0, 0, 0, 0)
-        attitude = self.master.recv_match(type='ATTITUDE', blocking=True)
-        return [math.degrees(attitude.yaw), math.degrees(attitude.yawspeed),
-                math.degrees(attitude.roll), math.degrees(attitude.rollspeed),
-                math.degrees(attitude.pitch), math.degrees(attitude.pitchspeed)]
-
-    def get_pressure(self):
-        self.master.mav.command_long_send(self.master.target_system, self.master.target_component,
-                                          mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
-                                          0,
-                                          29, 0, 0, 0, 0, 0, 0)
-        pressure = self.master.recv_match(
-            type='SCALED_PRESSURE', blocking=True)
-        pressure_abs = float(pressure.press_abs)
-        pressure_diff = pressure.press_diff
-        temperature = pressure.temperature
-        # Depth (m) = ((P0/ρ) - P) / g
-        p0 = 1013.25
-        p = 1000.0
-        P = pressure_abs/1000.0
-        g = 9.83  # -> NOT : Arac yukari yada asagiya giderkenki ivmesiyle toplanmasi lazim galiba denemek lazim
-        pressuremeter = ((p0/p) - P)/g
-        pressuremeter2 = pressure_abs / (9.8 * 997.0)
-        return pressure_abs, pressuremeter*100, pressuremeter2
-
-    def get_servo(self):
-        """
-        The SERVO_OUTPUT_RAW message contains data for 8 servo/engine outputs
-        You can access the data for each output using the following indices:
-        engine.servo1_raw, engine.servo2_raw, engine.servo3_raw, engine.servo4_raw
-        engine.servo5_raw, engine.servo6_raw, engine.servo7_raw, engine.servo8_raw
-        """
-        self.master.mav.command_long_send(self.master.target_system, self.master.target_component,
-                                          mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
-                                          0,
-                                          36, 0, 0, 0, 0, 0, 0)
-        engine = self.master.recv_match(
-            type='SERVO_OUTPUT_RAW', blocking=True).to_dict()
-        return [engine[f'servo{i+1}_raw'] for i in range(8)]
-
     def set_arm(self, i):
+        """
+        (DISARM)i=0 icin arac kendini disarm eder ve komutlar calismaz
+        (ARM)i=1 icin arac kendini arm eder ve komut almaya hazirdir
+        """
         conttime=3
         while True:
             self.master.mav.command_long_send(
@@ -145,6 +98,10 @@ class Dolunay():
         return
 
     def set_mod(self, mode):
+        """
+        Aracin modunu degistirmek icin kullanilir
+        Ornek set_mod("ACRO") -> araci ACRO moda alir
+        """
         mode = mode.upper()
         if mode not in self.master.mode_mapping():
             print(
@@ -163,18 +120,9 @@ class Dolunay():
             self.set_mod(mode)
         return
 
-    def get_heartbeat(self):
-        return self.master.recv_match(type='HEARTBEAT', blocking=True, timeout=1)
-
-    def get_battery_percentage(self):
-        return self.master.recv_match(type='BATTERY_STATUS', blocking=True, timeout=1).battery_remaining
-
-    def get_attitude_fast(self):
-        return self.master.recv_match(type='ATTITUDE', blocking=False, timeout=0.5)
-
-    def get_message(self):
-        return self.master.messages
-
     def kapat(self):
+        """
+        Pixhawk ile olan baglanitiyi kapatir.
+        """
         self.master.close()
         print("-> Baglanti kapatildi.")
