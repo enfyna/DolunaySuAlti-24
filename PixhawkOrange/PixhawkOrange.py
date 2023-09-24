@@ -4,6 +4,10 @@ import time
 import math
 
 class Dolunay():
+
+    SUCCESS = 0
+    ERROR_OUT_OF_LOOP = 1
+
     def __init__(self, baglanti_modu):
         def baglan():
             platform = sys.platform.lower()
@@ -68,57 +72,77 @@ class Dolunay():
             if(t==0):
                 break
         return
+
     def yunusbaligi(self):
         #duzenlecek
         return
 
-    def set_arm(self, i):
+    def set_arm(self, arm : bool = True, max_try : int = 3):
         """
-        (DISARM)i=0 icin arac kendini disarm eder ve komutlar calismaz
-        (ARM)i=1 icin arac kendini arm eder ve komut almaya hazirdir
+        (DISARM) arm = False icin arac kendini disarm eder ve komutlar calismaz
+        (ARM) arm = True icin arac kendini arm eder ve komut almaya hazirdir
+        (max_try) bu degisken ile en fazla kac defa arm etme denemesi yapilmasi
+        verilebilir. Eger verilen deneme sayısında istenilen sonuca ulasilamazsa
+        0, basarılı olursa 1 geri dondurur
         """
-        conttime=3
-        while True:
+        for _ in range(max_try):
             self.master.mav.command_long_send(
                 self.master.target_system,
                 self.master.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
                 0,
-                i, 0, 0, 0, 0, 0, 0)
-            time.sleep(1)
-            conttime=conttime-1
-            if(conttime==0):
-                break
-        if i == 0:
-            self.master.motors_disarmed_wait()
-            print("-> Disarm")
-        else:
-            self.master.motors_armed_wait()
-            print("-> Arm")
-        return
+                arm, 0, 0, 0, 0, 0, 0)
 
-    def set_mod(self, mode):
+            self.master.wait_heartbeat(timeout=1)
+
+            if arm and self.master.motors_armed() == mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED:
+                print("-> Armed")
+                return self.SUCCESS
+            elif not arm and self.master.motors_armed() == 0:
+                print("-> Disarmed")
+                return self.SUCCESS
+        return self.ERROR_OUT_OF_LOOP
+
+    def set_mod(self, mode : str = 'ACRO', max_try : int = 3):
         """
         Aracin modunu degistirmek icin kullanilir
         Ornek set_mod("ACRO") -> araci ACRO moda alir
         """
-        mode = mode.upper()
-        if mode not in self.master.mode_mapping():
-            print(
-                "'{}' modu bulunamadi.Yazim hatasina dikkat et.\nSTABILIZE moda gecilecek.".format(mode))
-            mode = "MANUAL"
+        mode_map = self.master.mode_mapping()
 
-        mode_id = self.master.mode_mapping()[mode]
-        self.master.mav.set_mode_send(self.master.target_system,
-                                      mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-                                      mode_id)
-        heartbeat = self.master.recv_match(type='HEARTBEAT', blocking=True)
-        mode1 = list(self.master.mode_mapping().keys())[
-            list(self.master.mode_mapping().values()).index(heartbeat.custom_mode)]
-        print("Mod -> ", mode1)
-        if(mode!=mode1):
-            self.set_mod(mode)
-        return
+        mode = mode.upper()
+
+        if mode not in mode_map:
+            print(\
+                f"{mode} modu bulunamadi."\
+                " ACRO moda gecilecek."\
+            )
+            mode = 'ACRO'
+
+        mode_id = mode_map[mode]
+
+        mode_map_keys = tuple(mode_map.keys())
+        mode_map_values = tuple(mode_map.values())
+
+        for _ in range(max_try):
+            self.master.mav.set_mode_send(
+                self.master.target_system,
+                mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                mode_id
+            )
+
+            hb = self.master.wait_heartbeat(timeout=1)
+            if hb is None:
+                print('Couldnt receive heartbeat')
+                continue
+
+            current_mode = mode_map_keys[mode_map_values.index(hb.custom_mode)]
+
+            print("Mod -> ", current_mode)
+
+            if mode == current_mode:
+                return self.SUCCESS
+        return self.ERROR_OUT_OF_LOOP
 
     def kapat(self):
         """
