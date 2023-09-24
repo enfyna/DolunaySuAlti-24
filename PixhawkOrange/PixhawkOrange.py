@@ -53,7 +53,7 @@ class Dolunay():
         """
         x- ileri ve geri hareket,[-1000,1000] araligi(0 degeri hareket vermez)
         y- saga ve sola hareket,[-1000,1000] araligi(0 degeri hareket vermez)
-        z- yukari ve asagi hareket,[-1000,1000] araligi(500 degeri hareket vermez)
+        z- yukari ve asagi hareket,Uyarı! [0,1000] araligi(500 degeri hareket vermez)
         r- kendi etrafinda saga ve sola hareket,[-1000,1000] araligi(0 degeri hareket vermez)
         t- hareketin kac saniye islecegi
         """
@@ -103,10 +103,10 @@ class Dolunay():
                 return self.SUCCESS
         return self.ERROR_OUT_OF_LOOP
 
-    def set_mod(self, mode : str = 'ACRO', max_try : int = 3):
+    def set_mod(self, mode : str = 'DEPTH_HOLD', max_try : int = 3):
         """
         Aracin modunu degistirmek icin kullanilir
-        Ornek set_mod("ACRO") -> araci ACRO moda alir
+        Ornek set_mod("DEPTH_HOLD") -> araci DEPTH_HOLD moda alir
         """
         mode_map = self.master.mode_mapping()
 
@@ -117,7 +117,7 @@ class Dolunay():
                 f"{mode} modu bulunamadi."\
                 " ACRO moda gecilecek."\
             )
-            mode = 'ACRO'
+            mode = 'DEPTH_HOLD'
 
         mode_id = mode_map[mode]
 
