@@ -1,8 +1,11 @@
 from pymavlink import mavutil
-import time
 
 def getData(master):
-    lines = data(master)+basinc(master)+motor(master)+mod(master)
+    lines = {}
+    lines.update(data(master))
+    lines.update(pressure(master))
+    lines.update(motors(master))
+    lines.update(mod(master))
     return lines
 
 
@@ -15,27 +18,30 @@ def data(master):
     yaw = attitude.yaw
     roll = attitude.roll
     pitch = attitude.pitch
-    data = [yaw,roll,pitch]
+    data = {
+        "yaw": yaw,
+        "roll": roll,
+        "pitch": pitch}
     return data
 
-def basinc(master):
+def pressure(master):
     master.mav.command_long_send(master.target_system,master.target_component,
                                      mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,0,
                                      29,0,0,0,0,0,0)
     pressure = master.recv_match(type='SCALED_PRESSURE', blocking=True)
-    pressure_abs = pressure.press_abs
-    pressure_diff = pressure.press_diff
+    pressure_abs = pressure.press_abs#hPa
+    pressure_diff = pressure.press_diff#hPa
     temperature = pressure.temperature
-    # Depth (m) = ((P0/ρ) - P) / g
-    p0 = 1013.25
+    #Depth (meters) = (Differential Pressure (hPa)) / (Density (kg/m³) * Gravity (m/s²) * 100)
+    #In this formula, 100 is used to convert hPa to Pa because 1 hPa = 100 Pa.
     p = 1000.0
-    P=pressure_abs/1000.0
     g = 9.83
-    pressuremeter = ((p0/p) - P)/g
-    data = [pressuremeter]
+    depth=pressure_diff/(p*g*100)
+    data =  { "pressure": depth
+             }
     return data
 
-def motor(master):
+def motors(master):
     master.mav.command_long_send(master.target_system,master.target_component,
                                      mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
                                      0,
@@ -45,8 +51,12 @@ def motor(master):
     # You can access the data for each output using the following indices:
     # engine.servo1_raw, engine.servo2_raw, engine.servo3_raw, engine.servo4_raw
     # engine.servo5_raw, engine.servo6_raw, engine.servo7_raw, engine.servo8_raw
-    data =[engine.servo1_raw,engine.servo2_raw,engine.servo3_raw,engine.servo4_raw,engine.servo5_raw,engine.servo6_raw,engine.servo7_raw,engine.servo8_raw]
+    data ={"servo1":engine.servo1_raw,"servo2":engine.servo2_raw,
+           "servo3":engine.servo3_raw,"servo4":engine.servo4_raw,
+           "servo5":engine.servo5_raw,"servo6":engine.servo6_raw,
+           "servo7":engine.servo7_raw,"servo8":engine.servo8_raw}
     return data
+
 def decode_mode(base_mode, custom_mode):
     """Decode flight mode from base_mode and custom_mode fields of HEARTBEAT message"""
     mode = 'UNKNOWN'
@@ -105,6 +115,7 @@ def mod(master):
         armedtext = "ARMED"
     else:
         armedtext = "DISARM"
-    data=[mode_name,armedtext]
+    data={"mode":mode_name,
+          "arm":armedtext}
     return data
             
