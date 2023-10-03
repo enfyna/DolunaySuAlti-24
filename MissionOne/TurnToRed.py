@@ -5,7 +5,7 @@
 #   goruldugunde aracı bulundugu yerde sag-sol
 #   yaparak cisme dogru yonlendir
 #
-#   Bu kodu atölyenin yanındaki su deposunda, 
+#   Bu kodu atölyenin yanındaki su deposunda,
 # 	aracın kamerasıyla hem görüntü işleme hem de
 # 	aracın dr hassasiyetini test etmek için yazdım.
 #
@@ -26,6 +26,7 @@ sys.path.append(ROOT_PATH)
 # Dolunayı simdi import edebiliriz
 from PixhawkOrange.PixhawkOrange import Dolunay
 
+import numpy as np
 import cv2
 
 cap = cv2.VideoCapture(0)
@@ -35,6 +36,10 @@ window_x = int(cap.get(3))
 # kameradan alınan görüntünün genişliğini al
 # Aracı sadece saga sola cevirecegiz o yuzden yukseklige gerek yok
 
+lower_cyan = np.array([40, 50, 0])
+upper_cyan = np.array([100, 255, 255])
+# Renk aralıgı
+
 def TurnToRed() -> int:
 	"""
 	Kamerada görülen en büyük kırmızı cismi bulup
@@ -42,16 +47,31 @@ def TurnToRed() -> int:
 	"""
 	_, dispframe = cap.read()
 	# Kameradan goruntu al
+	# frame = cv2.resize(dispframe,(200,150))
+	# kucult
 	frame = cv2.bitwise_not(dispframe)
 	# Renkleri tersine cevir
 	frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 	# HSV'ye donustur
-	frame = cv2.inRange(frame, self.lower_cyan, self.upper_cyan)
+	frame = cv2.inRange(frame, lower_cyan, upper_cyan)
 	# inRange ile camgobegi rengini bul
+	cv2.imshow('inrange',frame)
+	# frame = cv2.threshold(frame, 40, 200, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+	# cv2.imshow('threshold',frame)
+	
+
+	# cv2.imshow('cam',dispframe)
+	cv2.waitKey(24)
 
 	contours, _ = cv2.findContours(
 		frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 	# contour listesini al
+
+	if len(contours) == 0:
+		return None
+		# c bulamadık o yüzden None döndür
+
+	anlik_max_c_alani, secilen_c = 0.0, None
 
 	for c in contours:
 		M = cv2.moments(c)
@@ -63,26 +83,27 @@ def TurnToRed() -> int:
 			# Bulunan en buyuk c'yi anlik olarak kaydet
 			# Not : scm -> secilen c momenti
 
-	if secilen_c is not None:
-		cx , cy = scm['m10']//scm['m00'] , scm['m01']//scm['m00']
-		# Secilen c'nin momentinden merkezini hesapla
-
-		return int(window_x - cx)
-		# cisimle kameranın orta noktasındaki farkı gönder
-
-	return None
-	# c bulamadık o yüzden None döndür
+	cx = scm['m10']//scm['m00']
+	# Secilen c'nin momentinden merkezini hesapla
+	cv2.drawContours(dispframe,[secilen_c],-1, 0xFF0, cv2.FILLED)
+	# cv2.circle(dispframe,(cx,50),1,0xFFF,3)
+	cv2.imshow('cont',dispframe)
+	return cx - window_x // 2
+	# cisimle kameranın orta noktasındaki farkı gönder
 
 
 def sign(x) -> int:
 	return (x > 0) - (x < 0)
 
 
-arac = Dolunay('USB')
+arac = Dolunay('SITL')
 # aracı olustur
 
 arac.set_arm(1)
 # arm et
+
+arac.set_mod('ACRO')
+# mod ayarla
 
 try:
 	# Gorev algoritmasını burada calıstıracagız
