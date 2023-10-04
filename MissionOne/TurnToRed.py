@@ -10,7 +10,8 @@
 # 	aracın dr hassasiyetini test etmek için yazdım.
 #
 
-from os import sys, path
+from os.path import abspath
+from sys import path
 
 # Python normalde kendi bulundugu klasorun icindeki modulleri import edebilir.
 # Ama suanda PixhawkOrange klasorundeki Dolunay sınıfını almak istiyoruz bu yuzden
@@ -18,10 +19,10 @@ from os import sys, path
 # Komut satırında 'cd ..' komutunu kullanıyormus gibi dusunulebilinir.
 
 # DolunaySuAlti-24 klasorunu bul
-ROOT_PATH = '/'.join(path.abspath(__file__).split('/')[0:-2]) # linux
+ROOT_PATH = '/'.join(abspath(__file__).split('/')[0:-2]) # linux
 
 # path'a ekle
-sys.path.append(ROOT_PATH)
+path.append(ROOT_PATH)
 
 # Dolunayı simdi import edebiliriz
 from PixhawkOrange.PixhawkOrange import Dolunay
@@ -32,12 +33,13 @@ import cv2
 cap = cv2.VideoCapture(0)
 # kamerayı aç
 
-window_x = int(cap.get(3))
+window_x_half = int(cap.get(3) / 2)
 # kameradan alınan görüntünün genişliğini al
+
 # Aracı sadece saga sola cevirecegiz o yuzden yukseklige gerek yok
 
-lower_cyan = np.array([40, 50, 0])
-upper_cyan = np.array([100, 255, 255])
+lower_cyan = np.array([40, 50, 0], int)
+upper_cyan = np.array([100, 255, 255], int)
 # Renk aralıgı
 
 def TurnToRed() -> int:
@@ -83,20 +85,16 @@ def TurnToRed() -> int:
 			# Bulunan en buyuk c'yi anlik olarak kaydet
 			# Not : scm -> secilen c momenti
 
-	cx = scm['m10']//scm['m00']
+	cx = int(scm['m10'] / scm['m00'])
 	# Secilen c'nin momentinden merkezini hesapla
 	cv2.drawContours(dispframe,[secilen_c],-1, 0xFF0, cv2.FILLED)
 	# cv2.circle(dispframe,(cx,50),1,0xFFF,3)
 	cv2.imshow('cont',dispframe)
-	return cx - window_x // 2
+	return cx - window_x_half
 	# cisimle kameranın orta noktasındaki farkı gönder
 
 
-def sign(x) -> int:
-	return (x > 0) - (x < 0)
-
-
-arac = Dolunay('SITL')
+arac = Dolunay('USB')
 # aracı olustur
 
 arac.set_arm(1)
@@ -110,25 +108,18 @@ try:
 
 	hassasiyet = 1
 
-	son_yon = 0
-	bekleme_hizi = 100
 	while True:
 		# Aracı sonsuza kadar kırmızı
 		# cismin oldugu yöne doğru çevir
 
 		dr = TurnToRed()
 
-		if dr is None:
-			arac.hareket_et(0,0,0,son_yon * bekleme_hizi,1)
-			# Kamera kırmızı bir cisim bulamamıs
-			# o yüzden aracın dondugu son yone dogru
-			# bekleme hizi ile don
-		else:
-			arac.hareket_et(0,0,0,dr * hassasiyet,1)
+		if dr is not None:
+			arac.hareket_et(0, 0, 500, dr * hassasiyet, 1, 0)
 			# Aracın yönünü cisme doğru çevir
-
-			son_yon = sign(dr)
-			# Aracın dondugu son yonu kaydet
+		else:
+			arac.hareket_et(0, 0, 500, 0, 1, 0)
+			# kırmızı cisim bulamamısız bekle
 
 except KeyboardInterrupt:
 	# Ctrl - C basarak görevi bitir
