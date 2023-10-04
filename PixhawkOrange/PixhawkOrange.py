@@ -28,10 +28,12 @@ class Dolunay():
                     print("Arac ile baglanti kuruldu.")
                     break
                 except:
-                    raise Exception(
-                        "Arac ile baglanti kurulamadi."
-                        "Port bilgisinde hata var yada kablo duzgun takilmamis olabilir."
-                    )
+                    continue
+            else:
+                raise Exception(
+                    "Arac ile baglanti kurulamadi."
+                    "Port bilgisinde hata var yada kablo duzgun takilmamis olabilir."
+                )
         elif baglanti_modu == "SITL":
             port = 'udp:127.0.0.1:14550'
             master = mavutil.mavlink_connection(port)
