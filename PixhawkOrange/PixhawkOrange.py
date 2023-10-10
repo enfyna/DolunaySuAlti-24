@@ -82,7 +82,7 @@ class Dolunay():
     def yunusbaligi(self):
         ...
 
-    def set_arm(self, arm : bool = True, max_try : int = 3):
+    def set_arm(self, arm : bool = True, max_try : int = 7):
         """
         (DISARM) arm = False icin arac kendini disarm eder ve komutlar calismaz
         (ARM) arm = True icin arac kendini arm eder ve komut almaya hazirdir
@@ -108,7 +108,7 @@ class Dolunay():
                 return self.SUCCESS
         return self.ERROR_OUT_OF_LOOP
 
-    def set_mod(self, mode : str = 'ALT_HOLD', max_try : int = 3):
+    def set_mod(self, mode : str = 'ALT_HOLD', max_try : int = 7):
         """
         Aracin modunu degistirmek icin kullanilir
         Ornek set_mod("ALT_HOLD") -> araci ALT_HOLD moda alir
