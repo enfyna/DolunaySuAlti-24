@@ -6,35 +6,31 @@ class Dolunay():
     SUCCESS = 0
     ERROR_OUT_OF_LOOP = 1
 
-    def __init__(self, baglanti_modu):
-        if baglanti_modu == "USB":
+    def __init__(self):
+        """
+        Araca baglanmak için sırasıyla USB->SITL portlarını dene
+        """
+        from sys import platform
 
-            from sys import platform
+        OS = platform.lower()
+        print(f"İsletim Sistemi : {OS}")
 
-            OS = platform.lower()
-            print(f"İsletim Sistemi : {OS}")
+        if OS == "linux":
+            port = '/dev/ttyACM'
+        elif OS == "win32":
+            port = 'COM'
+        else:
+            raise Exception("Bilinmeyen isletim sistemi ?")
 
-            if OS == "linux":
-                port = '/dev/ttyACM'
-            elif OS == "win32":
-                port = 'COM'
-            else:
-                raise Exception("Bilinmeyen isletim sistemi ?")
-
-            for idx in range(21):
-                try:
-                    master = mavutil.mavlink_connection(f'{port}{idx}')
-                    master.wait_heartbeat(blocking=False)
-                    print("Arac ile baglanti kuruldu.")
-                    break
-                except:
-                    continue
-            else:
-                raise Exception(
-                    "Arac ile baglanti kurulamadi."
-                    "Port bilgisinde hata var yada kablo duzgun takilmamis olabilir."
-                )
-        elif baglanti_modu == "SITL":
+        for idx in range(21):
+            try:
+                master = mavutil.mavlink_connection(f'{port}{idx}')
+                master.wait_heartbeat(blocking=False)
+                print("USB ile baglanti kuruldu.")
+                break
+            except:
+                continue
+        else:
             port = 'udp:127.0.0.1:14550'
             master = mavutil.mavlink_connection(port)
             master.wait_heartbeat(timeout = 3)
@@ -44,12 +40,9 @@ class Dolunay():
                 print("SITL ile baglanti kuruldu.")
             else:
                 raise Exception(
-                    "SITL ile bağlanti kurulamadi port bilgisini kontrol edin."
+                    "Arac ile baglanti kurulamadi."
+                    "Port bilgisinde hata var yada kablo duzgun takilmamis olabilir."
                 )
-        else:
-            raise Exception(
-                "Araca sadece USB ya da SITL ile baglanabilirsin."
-            )
 
         self.master = master
 
