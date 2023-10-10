@@ -1,8 +1,8 @@
 import socket
 import base64
 import json
-import base64
 import cv2
+import JoystickController
 class ClientConn():
     def __init__(self,host,port):
         """
@@ -94,7 +94,6 @@ class ClientConn():
         json_data = json.dumps(self.data)
         try:
             self.sock.send(json_data.encode())
-            self.recieveData()
             self.isSended=True
         except (BrokenPipeError, ConnectionResetError):
             if(self.isSended):
@@ -107,10 +106,20 @@ class ClientConn():
                 print(e)
                 self.connect() 
 
-    def recieveData(self):
+    def recieveData(self,vehicle):
         response = self.sock.recv(1024)
-        if(response.decode()=="recieved"):
+        if not response.decode():
+            return
+        
+        if(response.decode()=="received"):
             pass
+        else:
+            JoystickController.joystickControl(response.decode(), vehicle)
             
     def close(self):
         self.sock.close()
+        
+        
+        
+        
+ 
