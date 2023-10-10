@@ -266,7 +266,9 @@ class Dolunay():
 
     def kapat(self):
         """
-        Pixhawk ile olan baglanitiyi kapatir.
+        Pixhawk ile olan baglantiyi kapatir.
         """
+        self.set_arm(False)
+
         self.master.close()
         print("-> Baglanti kapatildi.")
