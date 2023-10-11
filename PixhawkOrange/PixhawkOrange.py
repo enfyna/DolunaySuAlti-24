@@ -190,7 +190,7 @@ class Dolunay():
         }
         return data
 
-    def motors(self) -> dict:
+    def get_motors(self) -> dict:
         self.master.mav.command_long_send(
             self.master.target_system,self.master.target_component,
             mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
