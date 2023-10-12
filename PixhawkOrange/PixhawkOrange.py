@@ -149,12 +149,11 @@ class Dolunay():
         return self.ERROR_OUT_OF_LOOP
 
     def getData(self) -> dict:
-        lines = {
-            **self.get_attitude(),
-            **self.get_pressure(),
-            **self.motors(),
-            **self.get_mod()
-        }
+        lines = {}
+        lines.update(self.get_attitude)
+        lines.update(self.get_pressure)
+        lines.update(self.get_motors)
+        lines.update(self.get_mod)
         return lines
 
     def get_attitude(self) -> dict:
