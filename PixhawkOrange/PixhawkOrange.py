@@ -150,10 +150,10 @@ class Dolunay():
 
     def getData(self) -> dict:
         lines = {}
-        lines.update(self.get_attitude)
-        lines.update(self.get_pressure)
-        lines.update(self.get_motors)
-        lines.update(self.get_mod)
+        lines.update(self.get_attitude())
+        lines.update(self.get_pressure())
+        lines.update(self.get_motors())
+        lines.update(self.get_mod())
         return lines
 
     def get_attitude(self) -> dict:
