@@ -1,5 +1,6 @@
 from pymavlink import mavutil
 from time import sleep
+from DistanceSensor import Distance
 
 class Dolunay():
 
@@ -58,6 +59,7 @@ class Dolunay():
             self.current_arm_state = 'DISARM'
 
         self.current_mode = self.mode_map_keys[self.mode_map_values.index(hb.custom_mode)]
+        self.Distance = Distance()
         return
 
     def hareket_et(self, x, y, z, r, t = 1, i = 1) -> int:
