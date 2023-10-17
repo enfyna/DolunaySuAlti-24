@@ -4,11 +4,12 @@ import json
 import cv2
 import JoystickController
 class ClientConn():
-    def __init__(self,host,port):
+    def __init__(self,host,port,vehicle):
         """
         host : (Name of computer or ip adress computer)("localhost")
         port : (Port used by the server)("65432")
         """
+        self.vehicle = vehicle
         self.host = host
         self.port = port
         self.data = {}
@@ -24,7 +25,7 @@ class ClientConn():
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-           self.sock.settimeout(0.5)
+           self.sock.settimeout(10)
            self.sock.connect((self.host, self.port))
            print("Connected.")
            self.isConnected=True
@@ -32,15 +33,15 @@ class ClientConn():
             if(self.isConnected):
                 print("Connection close.")
             self.isConnected=False
-    
+
     def codeImage(self,frame):
         _, encoded_frame = cv2.imencode('.jpg', frame)
-        framebase64 = base64.b64encode(encoded_frame.tobytes()).decode() 
+        framebase64 = base64.b64encode(encoded_frame.tobytes()).decode()
         return framebase64
-    
+
     def addData2Json(self,key,value):
         self.data[key] = value
-    
+
     def setHydrophoneData(self,hydrodata):
         try:
             json_data = json.dumps(hydrodata)
@@ -50,7 +51,7 @@ class ClientConn():
             if self.isHydrophoneSended:
                 print("Error: Hydrophone data not added.Check hydrophone sensor.")
                 self.isHydrophoneSended=False
-    
+
     def setDistanceData(self,disdata):
         try:
             json_data = json.dumps(disdata)
@@ -60,8 +61,8 @@ class ClientConn():
             if self.isDistanceSended:
                 print("Error: Distance data not added.Check distance sensor.")
                 self.isDistanceSended=False
-                
-        
+
+
     def setPixhawkData(self,pixhawkdata):
         try:
             self.addData2Json("pixhawkdata", pixhawkdata)
@@ -70,8 +71,8 @@ class ClientConn():
             if self.isPixhawkSended:
                 print("Error: Pixhawk data not added.Check pixhawk.")
                 self.isPixhawkSended=False
-    
-    
+
+
     def setFrontCam(self,frame):
         try:
             self.addData2Json("cam1",self.codeImage(frame))
@@ -80,7 +81,7 @@ class ClientConn():
             if self.isFrontCamSended:
                 print("Error: Front Cam not added.Check camera.")
                 self.isFrontCamSended=False
-    
+
     def setUnderCam(self,frame):
         try:
             self.addData2Json("cam2",self.codeImage(frame))
@@ -89,7 +90,7 @@ class ClientConn():
             if self.isUnderCamSended:
                 print("Error: Under Cam not added.Check camera.")
                 self.isUnderCamSended=False
-        
+
     def sendAllData(self):
         json_data = json.dumps(self.data)
         try:
@@ -104,22 +105,19 @@ class ClientConn():
                 self.connect()
         except Exception as e:
                 print(e)
-                self.connect() 
+                self.connect()
 
-    def recieveData(self,vehicle):
+    def receiveData(self):
         response = self.sock.recv(1024)
-        if not response.decode():
+        if not response:
             return
-        
-        if(response.decode()=="received"):
+        try:
+            if(response.decode()=="received"):
+                pass
+            else:
+                JoystickController.joystickControl(response.decode(), self.vehicle)
+        except:
             pass
-        else:
-            JoystickController.joystickControl(response.decode(), vehicle)
-            
+
     def close(self):
         self.sock.close()
-        
-        
-        
-        
- 

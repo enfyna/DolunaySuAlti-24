@@ -11,7 +11,7 @@ cap1 = cv2.VideoCapture(0)
 cap2 = cv2.VideoCapture(1)
 
 # socket settings
-connStation = cgs.ClientConn("169.254.253.126", 65432)
+connStation = cgs.ClientConn("169.254.17.41", 65432)
 arac.set_arm(1)
 
 while cap1.isOpened() and cap2.isOpened():
@@ -26,21 +26,20 @@ while cap1.isOpened() and cap2.isOpened():
             connStation.setUnderCam(frame2)
             connStation.setPixhawkData(arac.getData())
             connStation.sendAllData()
-            connStation.recieveData(arac)
+            connStation.receiveData()
         except KeyboardInterrupt:
             cap1.release()
             cap2.release()
             connStation.close()
         except Exception as e:
+            cap1.release()
             cap2.release()
             connStation.close()
             print(e)
-            break
-            cap2.release()     
+            break  
         if cv2.waitKey(1) == ord('q'):
             break   
 cap1.release()
 cap2.release()
 connStation.close()
-
 
