@@ -5,13 +5,13 @@ import PixhawkOrange
 
 
 
-arac = PixhawkOrange.Dolunay("USB")
+arac = PixhawkOrange.Dolunay()
 
 cap1 = cv2.VideoCapture(0)
 cap2 = cv2.VideoCapture(1)
 
 # socket settings
-connStation = cgs.ClientConn("169.254.17.41", 65432)
+connStation = cgs.ClientConn("169.254.17.41", 65432,arac)
 arac.set_arm(1)
 
 while cap1.isOpened() and cap2.isOpened():

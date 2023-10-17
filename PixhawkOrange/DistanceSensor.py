@@ -3,13 +3,18 @@ from brping import Ping1D
 
 class Distance():
     def __init__(self):
-        self.rightDistance = Ping1D()
-        self.rightDistance.connect_serial("COM16", 115200)
-        self.initilazeRightDisSensor()
-        
-        self.leftDistance = Ping1D()
-        self.leftDistance.connect_serial("COM17", 115200)
-        self.initilazeRightDisSensor()
+        try:
+            self.rightDistance = Ping1D()
+            self.rightDistance.connect_serial("/dev/ttyACM0", 115200)
+            self.initilazeRightDisSensor()
+        except:
+            pass
+        try:
+            self.leftDistance = Ping1D()
+            self.leftDistance.connect_serial("/dev/ttyACM0", 115200)
+            self.initilazeRightDisSensor()
+        except:
+            pass
     
     def initilazeRightDisSensor(self):
         #self.rightDistance.set_speed_of_sound(1450000)
