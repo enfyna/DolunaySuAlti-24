@@ -62,7 +62,7 @@ class Dolunay():
         self.Distance = Distance()
         return
 
-    def hareket_et(self, x, y, z, r, t = 1, i = 1) -> int:
+    def hareket_et(self, x, y, z, r, t = 1.0, i = 0) -> int:
         """
         x- ileri ve geri hareket,[-1000,1000] araligi(0 degeri hareket vermez)
         y- saga ve sola hareket,[-1000,1000] araligi(0 degeri hareket vermez)
@@ -114,12 +114,15 @@ class Dolunay():
                 return self.SUCCESS
         return self.ERROR_OUT_OF_LOOP
 
-    def set_mod(self, mode : str = 'ALT_HOLD', max_try : int = 7) -> int:
+    def set_mod(self, mode : str = 'ALT_HOLD', max_try : int = 100) -> int:
         """
         Aracin modunu degistirmek icin kullanilir
         Ornek set_mod("ALT_HOLD") -> araci ALT_HOLD moda alir
         """
         mode = mode.upper()
+        self.mode_map = self.master.mode_mapping()
+        self.mode_map_keys = tuple(self.mode_map.keys())
+        self.mode_map_values = tuple(self.mode_map.values())
 
         if mode not in self.mode_map:
             print(
@@ -129,7 +132,7 @@ class Dolunay():
             mode = 'ALT_HOLD'
 
         mode_id = self.mode_map[mode]
-
+        print(self.mode_map)
         for _ in range(max_try):
             self.master.mav.set_mode_send(
                 self.master.target_system,
@@ -143,7 +146,7 @@ class Dolunay():
                 continue
 
             self.current_mode = self.mode_map_keys[self.mode_map_values.index(hb.custom_mode)]
-
+            print(mode)
             print("Mod -> ", self.current_mode)
 
             if mode == self.current_mode:

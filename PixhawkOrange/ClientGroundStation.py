@@ -1,14 +1,19 @@
 import socket
+import os
 import base64
 import json
 import cv2
+import time
 import JoystickController
 class ClientConn():
-    def __init__(self,host,port,vehicle):
+    def __init__(self,port,vehicle,host=''):
         """
         host : (Name of computer or ip adress computer)("localhost")
         port : (Port used by the server)("65432")
         """
+        if host == '':
+            host = self.readIP()
+        print(host)
         self.vehicle = vehicle
         self.host = host
         self.port = port
@@ -21,11 +26,19 @@ class ClientConn():
         self.isDistanceSended=True
         self.isHydrophoneSended=True
         self.connect()
-
+    def readIP(self):
+        try:
+            with open(os.path.expanduser('~')+'/ipaddress.txt') as file:
+                ip = file.readline()
+                ip = ip.strip()
+                return ip
+        except Exception as e:
+            print("IP not found")
+            return 'localhost'
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-           self.sock.settimeout(10)
+           self.sock.settimeout(1)
            self.sock.connect((self.host, self.port))
            print("Connected.")
            self.isConnected=True
@@ -116,8 +129,8 @@ class ClientConn():
                 pass
             else:
                 JoystickController.joystickControl(response.decode(), self.vehicle)
-        except:
-            pass
+        except Exception as e:
+           print(e)
 
     def close(self):
         self.sock.close()

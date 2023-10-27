@@ -15,30 +15,30 @@ class Distance():
             self.initilazeRightDisSensor()
         except:
             pass
-    
+
     def initilazeRightDisSensor(self):
         #self.rightDistance.set_speed_of_sound(1450000)
         if self.rightDistance.initialize() is False:
             print("Failed to initialize Ping Right!")
-        
+
     def initilazeLeftDisSensor(self):
         #self.leftDistance.set_speed_of_sound(1450000)
         if self.leftDistance.initialize() is False:
             print("Failed to initialize Ping Left!")
-        
+
     def getRightDistance(self):
         data = self.rightDistance.get_distance()
         return data["distance"],data["confidence"]
-    
+
     def getLeftDistance(self):
         data = self.leftDistance.get_distance()
         return data["distance"],data["confidence"]
-    
+
     def getDistance(self):
         datal = self.leftDistance.get_distance()
         datar = self.rightDistance.get_distance()
         return datal["distance"],datar["distance"]
-    
+
     def getDiffDis(self):
         """
         (-) değer sol sensor daha uzak

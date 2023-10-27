@@ -11,16 +11,16 @@ cap1 = cv2.VideoCapture(0)
 cap2 = cv2.VideoCapture(1)
 
 # socket settings
-connStation = cgs.ClientConn("169.254.17.41", 65432,arac)
+connStation = cgs.ClientConn(65432,arac)
 arac.set_arm(1)
 
 while cap1.isOpened() and cap2.isOpened():
         try:
             ret1, frame1 = cap1.read()
-            ret2, frame2 = cap2.read() 
+            ret2, frame2 = cap2.read()
             assert ret1
             assert ret2
-            frame1 = cv2.resize(frame1, (200,200))
+            frame1 = cv2.resize(frame1, (100,100))
             connStation.setFrontCam(frame1)
             frame2 = cv2.resize(frame2, (200,200))
             connStation.setUnderCam(frame2)
@@ -36,10 +36,9 @@ while cap1.isOpened() and cap2.isOpened():
             cap2.release()
             connStation.close()
             print(e)
-            break  
+            break
         if cv2.waitKey(1) == ord('q'):
-            break   
+            break
 cap1.release()
 cap2.release()
 connStation.close()
-
