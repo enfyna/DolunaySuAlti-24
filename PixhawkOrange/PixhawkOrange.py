@@ -132,7 +132,6 @@ class Dolunay():
             mode = 'ALT_HOLD'
 
         mode_id = self.mode_map[mode]
-        print(self.mode_map)
         for _ in range(max_try):
             self.master.mav.set_mode_send(
                 self.master.target_system,

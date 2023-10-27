@@ -20,9 +20,9 @@ while cap1.isOpened() and cap2.isOpened():
             ret2, frame2 = cap2.read()
             assert ret1
             assert ret2
-            frame1 = cv2.resize(frame1, (100,100))
+            frame1 = cv2.resize(frame1, (200,150))
             connStation.setFrontCam(frame1)
-            frame2 = cv2.resize(frame2, (200,200))
+            frame2 = cv2.resize(frame2, (200,150))
             connStation.setUnderCam(frame2)
             connStation.setPixhawkData(arac.getData())
             connStation.sendAllData()

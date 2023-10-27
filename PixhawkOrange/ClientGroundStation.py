@@ -125,12 +125,14 @@ class ClientConn():
         if not response:
             return
         try:
-            if(response.decode()=="received"):
+
+            if(len(response)<100 and response.decode('utf-8').split("(")[1].split(")")[0]=="received"):
                 pass
             else:
                 JoystickController.joystickControl(response.decode(), self.vehicle)
         except Exception as e:
-           print(e)
+           pass
+           #print("HATA :"+ str(e))
 
     def close(self):
         self.sock.close()
