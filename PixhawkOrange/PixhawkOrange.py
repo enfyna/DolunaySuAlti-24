@@ -1,6 +1,7 @@
 from pymavlink import mavutil
 from time import sleep
 from DistanceSensor import Distance
+from cv2 import VideoCapture
 
 class Dolunay():
 
@@ -60,6 +61,9 @@ class Dolunay():
 
         self.current_mode = self.mode_map_keys[self.mode_map_values.index(hb.custom_mode)]
         self.Distance = Distance()
+
+        self.front_cap = VideoCapture(0)
+        self.bottom_cap = VideoCapture(1)
         return
 
     def hareket_et(self, x, y, z, r, t = 1.0, i = 0) -> int:
@@ -218,6 +222,17 @@ class Dolunay():
             "arm": self.current_arm_state
         }
         return data
+
+    def get_front_cam(self):
+        return self.front_cap.read()
+
+    def get_bottom_cam(self):
+        return self.bottom_cap.read()
+
+    def release_cams(self):
+        self.front_cap.release()
+        self.bottom_cap.release()
+        return self.SUCCESS
 
     def kapat(self) -> None:
         """
