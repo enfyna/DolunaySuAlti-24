@@ -5,6 +5,7 @@ import json
 import cv2
 import time
 import JoystickController
+
 class ClientConn():
     def __init__(self,port,vehicle,host=''):
         """
@@ -26,6 +27,7 @@ class ClientConn():
         self.isDistanceSended=True
         self.isHydrophoneSended=True
         self.connect()
+
     def readIP(self):
         try:
             with open(os.path.expanduser('~')+'/ipaddress.txt') as file:
@@ -35,6 +37,7 @@ class ClientConn():
         except Exception as e:
             print("IP not found")
             return 'localhost'
+
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -125,14 +128,13 @@ class ClientConn():
         if not response:
             return
         try:
-
-            if(len(response)<100 and response.decode('utf-8').split("(")[1].split(")")[0]=="received"):
+            if(len(response) < 100 and response.decode('utf-8').split("(")[1].split(")")[0]=="received"):
                 pass
             else:
                 JoystickController.joystickControl(response.decode(), self.vehicle)
         except Exception as e:
-           pass
            #print("HATA :"+ str(e))
+           pass
 
     def close(self):
         self.sock.close()
