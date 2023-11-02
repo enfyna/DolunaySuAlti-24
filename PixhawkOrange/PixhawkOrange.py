@@ -1,9 +1,7 @@
 from pymavlink import mavutil
 from time import sleep
-from DistanceSensor import Distance
-from cv2 import VideoCapture
 
-class Dolunay():
+class PixhawkOrange():
 
     SUCCESS = 0
     ERROR_OUT_OF_LOOP = 1
@@ -48,11 +46,11 @@ class Dolunay():
 
         self.master = master
 
+        hb = self.master.wait_heartbeat(blocking=True)
+        
         self.mode_map = self.master.mode_mapping()
         self.mode_map_keys = tuple(self.mode_map.keys())
         self.mode_map_values = tuple(self.mode_map.values())
-
-        hb = self.master.wait_heartbeat(blocking=True)
 
         if hb.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED:
             self.current_arm_state = 'ARM'
@@ -60,10 +58,6 @@ class Dolunay():
             self.current_arm_state = 'DISARM'
 
         self.current_mode = self.mode_map_keys[self.mode_map_values.index(hb.custom_mode)]
-        self.Distance = Distance()
-
-        self.front_cap = VideoCapture(0)
-        self.bottom_cap = VideoCapture(1)
         return
 
     def hareket_et(self, x, y, z, r, t = 1.0, i = 0) -> int:
@@ -222,17 +216,6 @@ class Dolunay():
             "arm": self.current_arm_state
         }
         return data
-
-    def get_front_cam(self):
-        return self.front_cap.read()
-
-    def get_bottom_cam(self):
-        return self.bottom_cap.read()
-
-    def release_cams(self):
-        self.front_cap.release()
-        self.bottom_cap.release()
-        return self.SUCCESS
 
     def kapat(self) -> None:
         """
