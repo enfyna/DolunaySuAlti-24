@@ -6,14 +6,6 @@ from time import sleep
 import socket
 
 class Dolunay():
-    
-    SUCCESS = 0
-    ERROR_OUT_OF_LOOP = 1
-
-    inp_state : dict = {
-        'inputs' : [0, 0, 500, 0],
-        'set_arm' : 0,
-    }
 
     sim_data : dict = {
         'cam_1':'',
@@ -27,16 +19,30 @@ class Dolunay():
         'is_armed' : 0,
     }
 
+    def __init__(self):
+        self.Camera = Camera(self)
+        self.Pixhawk = PixhawkSim(self)
+        self.Distance = DistanceSensor(self)
+
+class PixhawkSim():
+    
+    SUCCESS = 0
+    ERROR_OUT_OF_LOOP = 1
+
+    inp_state : dict = {
+        'inputs' : [0, 0, 500, 0],
+        'set_arm' : 0,
+    }
+
     # Bu özellik simulasyona eklenmediği için
     # şimdilik aracın her zaman bu mod
     # durumunda olduğunu kabul edelim
     current_mode : str = 'ACRO'
 
-    def __init__(self):
-        self.Distance = DistanceSensor(self)
-        
+    def __init__(self, parent):
+        self.parent = parent
         self.connection = DMS_Client()
-        self.sim_data = self.connection.recv()
+        self.parent.sim_data = self.connection.recv()
 
     def hareket_et(self, x, y, z, r, t = 1, i = 1) -> int:
         """
@@ -50,7 +56,7 @@ class Dolunay():
         self.inp_state['inputs'] = [x, y, z, r]
 
         self.connection.SendData(self.inp_state)
-        self.sim_data.update(self.connection.recv())
+        self.parent.sim_data.update(self.connection.recv())
         return self.SUCCESS
 
     def set_arm(self, arm : bool = True, max_try : int = 7) -> int:
@@ -58,9 +64,9 @@ class Dolunay():
     
         for _ in range(max_try):
             self.connection.SendData(self.inp_state)
-            self.sim_data.update(self.connection.recv())
+            self.parent.sim_data.update(self.connection.recv())
 
-            if int(self.sim_data['is_armed']) == arm:
+            if int(self.parent.sim_data['is_armed']) == arm:
                 self.inp_state.pop('set_arm')
                 print(f"-> {'ARMED' if arm else 'DISARMED'}")
                 return self.SUCCESS
@@ -69,7 +75,7 @@ class Dolunay():
     def get_mod(self) -> dict:
         data = {
             "mode": self.current_mode,
-            "arm": 'ARM' if self.sim_data['is_armed'] else 'DISARM'
+            "arm": 'ARM' if self.parent.sim_data['is_armed'] else 'DISARM'
         }
         return data
 
@@ -83,15 +89,15 @@ class Dolunay():
 
     def get_attitude(self) -> dict:
         data = {
-            "yaw": self.sim_data['yaw'],
-            "roll": self.sim_data['roll'],
-            "pitch": self.sim_data['pitch']
+            "yaw": self.parent.sim_data['yaw'],
+            "roll": self.parent.sim_data['roll'],
+            "pitch": self.parent.sim_data['pitch']
         }
         return data
 
     def get_pressure(self) -> dict:
         data = {
-            'pressure': self.sim_data['depth']
+            'pressure': self.parent.sim_data['depth']
         }
         return data
 
@@ -108,15 +114,6 @@ class Dolunay():
         }
         return data
 
-    def get_front_cam(self):
-        return True, self.sim_data['cam_1']
-
-    def get_bottom_cam(self):
-        return True, self.sim_data['cam_2']
-
-    def release_cams(self):
-        return None
-
     def kapat(self) -> None:
         """
         Simulasyon ile olan bağlantıyı kapatır.
@@ -130,28 +127,48 @@ class Dolunay():
         ...
 
 class DistanceSensor():
-    def __init__(self, master):
-        self.master = master
+    def __init__(self, parent):
+        self.parent = parent
 
     def getRightDistance(self):
-        data = float(self.master.sim_data['right_distance'])
+        data = float(self.parent.sim_data['right_distance'])
         return data, 0.9
 
     def getLeftDistance(self):
-        data = float(self.master.sim_data['left_distance'])
+        data = float(self.parent.sim_data['left_distance'])
         return data, 0.9
 
     def getDistance(self):
-        return float(self.master.sim_data['left_distance']), float(self.master.sim_data['right_distance'])
+        return float(self.parent.sim_data['left_distance']), float(self.parent.sim_data['right_distance'])
 
     def getDiffDis(self):
         """
         (-) değer sol sensor daha uzak
         (+) değer sağ sensor daha uzak
         """
-        diff = float(self.master.sim_data['right_distance']) - float(self.master.sim_data['left_distance'])
+        diff = float(self.parent.sim_data['right_distance']) - float(self.parent.sim_data['left_distance'])
         diff = round(diff, 5)
         return diff
+
+class Camera():
+    def __init__(self, parent):
+        self.parent = parent
+        return
+
+    def is_front_cam_open(self) -> bool:
+        return len(self.parent.sim_data['cam_1']) > 0
+    
+    def is_bottom_cam_open(self) -> bool:
+        return len(self.parent.sim_data['cam_2']) > 0
+
+    def get_front_cam(self):
+        return True, self.parent.sim_data['cam_1']
+
+    def get_bottom_cam(self):
+        return True, self.parent.sim_data['cam_2']
+
+    def release_cams(self):
+        return 0
 
 class DMS_Client():
 	def __init__(self):
