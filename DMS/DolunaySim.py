@@ -1,4 +1,4 @@
-from cv2 import imdecode, IMREAD_COLOR
+from cv2 import imdecode, IMREAD_COLOR, UMat
 from numpy import frombuffer, uint8
 from json import loads, dumps
 from base64 import b64decode
@@ -130,18 +130,18 @@ class DistanceSensor():
     def __init__(self, parent):
         self.parent = parent
 
-    def getRightDistance(self):
+    def getRightDistance(self) -> tuple[float, float]:
         data = float(self.parent.sim_data['right_distance'])
         return data, 0.9
 
-    def getLeftDistance(self):
+    def getLeftDistance(self) -> tuple[float, float]:
         data = float(self.parent.sim_data['left_distance'])
         return data, 0.9
 
-    def getDistance(self):
+    def getDistance(self) -> tuple[float, float]:
         return float(self.parent.sim_data['left_distance']), float(self.parent.sim_data['right_distance'])
 
-    def getDiffDis(self):
+    def getDiffDis(self) -> float:
         """
         (-) değer sol sensor daha uzak
         (+) değer sağ sensor daha uzak
@@ -161,13 +161,13 @@ class Camera():
     def is_bottom_cam_open(self) -> bool:
         return len(self.parent.sim_data['cam_2']) > 0
 
-    def get_front_cam(self):
+    def get_front_cam(self) -> tuple[bool, UMat]:
         return True, self.parent.sim_data['cam_1']
 
-    def get_bottom_cam(self):
+    def get_bottom_cam(self) -> tuple[bool, UMat]:
         return True, self.parent.sim_data['cam_2']
 
-    def release_cams(self):
+    def release_cams(self) -> int:
         return 0
 
 class DMS_Client():
