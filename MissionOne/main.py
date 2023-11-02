@@ -40,6 +40,8 @@ from M1 import M1, State
 
 mission = M1()
 
+mission.SetMissionVehicle(arac)
+
 # Gorev Kodu
 
 arac.Pixhawk.set_arm(True)
@@ -48,13 +50,7 @@ arac.Pixhawk.set_mod('ACRO')
 try:
 	while True:
 		# Gorev algoritmasını burada calıstıracagız
-		is_front_cam, frame_front = arac.Camera.get_front_cam()
-		is_bottom_cam, frame_bottom = arac.Camera.get_bottom_cam()
-
-		if not is_front_cam or not is_bottom_cam:
-			continue
-
-		move = mission.FindRed(frame_front, frame_bottom, arac.Distance.getLeftDistance()[0])
+		move = mission.FindRed()
 		# print(f'{State(mission.current_state)}')
 
 		if move is not None:
@@ -64,7 +60,8 @@ try:
 			# print("search  move -> (0, -1000, 500, 0)")
 			arac.Pixhawk.hareket_et(0, -1000, 500, 0, 1, 0)
 except Exception as e:
-	print(f'Hata: {e}')
+	import traceback
+	traceback.print_exception(e)
 
 arac.Pixhawk.set_arm(False)
 

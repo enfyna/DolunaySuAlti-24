@@ -19,11 +19,15 @@ class M1():
 	went_forward : int = 0
 	check_vertex : int = 0
 
-	def FindRed(self, front_img, bottom_img, left_distance) -> tuple[int, int, int, int] | None:
+	location_set : bool = False
+
+	def FindRed(self) -> tuple[int, int, int, int] | None:
 		cv2.waitKey(24)
 
-		cv2.imshow("front", front_img)
-		cv2.imshow("bottom", bottom_img)
+		_, front_img = self.arac.Camera.get_front_cam()
+		_, bottom_img = self.arac.Camera.get_bottom_cam()
+
+		left_distance, _ = self.arac.Distance.getLeftDistance()
 
 		match self.current_state:
 			case State.NORMALIZE_POSITION:
@@ -32,27 +36,25 @@ class M1():
 					return -1000, 0, 500, 0
 				self.current_state = State.SEARCH_RED_TARGET
 
-
 			case State.SEARCH_RED_TARGET:
-				hx = front_img.shape[1] // 2
-				qx = hx // 2
-				front_img = front_img[:, hx - qx: hx + qx]
-				
+				hx = front_img.shape[1] >> 1
+				hex_x = hx >> 4
+				front_img = front_img[:, hx - hex_x: hx + hex_x]
+
 				frame = self.FindRedFromImage(front_img)
 				cv2.imshow('searching', frame)
-								
-				frame = cv2.erode(frame, ones((5, 5), uint8))  
-				cv2.imshow('erode', frame)
+
+				# frame = cv2.erode(frame, ones((5, 5), uint8))
+				# cv2.imshow('erode', frame)
 
 				for row in frame:
 					if any(row):
-						if len(self.found_targets) > 0 and self.found_targets[-1] > left_distance - 2:
+						if len(self.found_targets) > 0 and self.found_targets[-1] > left_distance - 4:
 							return None
 						self.found_targets.append(left_distance)
 						self.current_state = State.IDENTIFY_TARGET
 						return 0, 0, 500, 0
 				return None
-
 
 			case State.IDENTIFY_TARGET:
 				frame = self.FindRedFromImage(front_img)
@@ -62,66 +64,97 @@ class M1():
 				if res is None:
 					self.current_state = State.SEARCH_RED_TARGET
 					return None
-				
+
+				props = []
 				for c in res:
 					M = cv2.moments(c)
-					if M['m00'] < 20:
+
+					cy = int(M['m01'] / M['m00']) if M['m00'] > 0 else 0
+					props.append((cy, (c, M)))
+
+				props.sort(key=lambda x: x[0], reverse=True)
+				print("loop:")
+				for cy, (c, M) in props:
+					vc = self.GetVertexCount(c)
+					print(vc)
+					if cy < front_img.shape[0] * 0.8:
 						self.went_forward += 1
 						return 1000, 0, 500, 0
-
-				for c in res:
-					if self.GetVertexCount(c) > 8:
-						self.check_vertex += 1
-						if self.check_vertex > 5:
-							self.check_vertex = 0
-							self.current_state = State.MOVE_TO_TARGET
+					if vc >= 6 and M['m00'] > 75:
+						front_img = cv2.drawContours(front_img, [c], -1, 0xfff, 1)
+						cv2.imshow('init', front_img)
+						print("->>",vc)
+						self.current_state = State.MOVE_TO_TARGET
 						return 0, 0, 500, 0
-
 				self.current_state = State.NORMALIZE_POSITION
 				return 0, 0, 500, 0
 
-
 			case State.MOVE_TO_TARGET:
 				frame = self.FindRedFromImage(front_img)
-				cv2.imshow('moving', frame)
+				# cv2.imshow('moving', frame)
 				res = self.GetContours(frame)
-				M, c = self.FindLargestContour(res, 8)
-				if M is not None:
-					cx = int(M['m10'] / M['m00'])
-					cy = int(M['m01'] / M['m00'])
-					# Secilen c'nin momentinden merkezini hesapla
-					diff_center = int(front_img.shape[1] // 2 - cx) * 10
-					return max(0, int(1000 -(abs(diff_center) * 2))), 0, 500, diff_center
+				print(len(res))
+				props = []
+				for c in res:
+					M = cv2.moments(c)
 
-				frame = self.FindRedFromImage(bottom_img)
-				res = self.GetContours(frame)
-				M, c = self.FindLargestContour(res, 8)
-				if M is not None:
-					cx = int(M['m10'] / M['m00'])
-					cy = int(M['m01'] / M['m00'])
-					diff_x = int(front_img.shape[1] // 2 - cx)
-					diff_y = int(front_img.shape[0] // 2 - cy)
-					if abs(diff_x) > 50 or abs(diff_y) > 50:
-						return int(diff_y) * 5, int(diff_x) * 5, 500, 0
-					self.current_state = State.LAND_ON_TARGET
+					props.append((M['m00'], (c, M)))
 
-				return 1000, 0, 500, 0
+				props.sort(key=lambda x: x[0], reverse=True)
+
+				for area, (c, M) in props:
+					if self.GetVertexCount(c) >= 6:
+						front_img = cv2.drawContours(front_img, [c], -1, 0xfff, 1)
+						cv2.imshow('moving', front_img)
+
+						cx = int(M['m10'] / M['m00'])
+
+						diff_center = int(front_img.shape[1] // 2 - cx) * 10
+						if abs(diff_center) < 20:
+
+							cy = int(M['m01'] / M['m00'])
+
+							if cy > front_img.shape[0] * 3 // 4:
+								self.current_state = State.LAND_ON_TARGET
+							return 1000, 0, 500, diff_center
+
+						return 0, 0, 500, diff_center
 
 			case State.LAND_ON_TARGET:
 				frame = self.FindRedFromImage(bottom_img)
-				cv2.imshow("landing", frame)
 				res = self.GetContours(frame)
-				M, c = self.FindLargestContour(res)
-				if M is not None:
-					cx = int(M['m10'] / M['m00'])
-					cy = int(M['m01'] / M['m00'])
-					diff_x = int(front_img.shape[1] // 2 - cx)
-					diff_y = int(front_img.shape[0] // 2 - cy)
-					z = 500
-					if abs(diff_x) < 50 or abs(diff_y) < 50:
-						z = 0
-					return int(diff_y) * 5, int(diff_x) * 5, z, 0
-				return 0, 0, -1000, 0
+				
+				props = []
+				for c in res:
+					M = cv2.moments(c)
+
+					props.append((M['m00'], (c, M)))
+
+				props.sort(key=lambda x: x[0], reverse=True)
+
+				if self.location_set:
+					for area, (c, M) in props:
+						cx = int(M['m10'] / M['m00'])
+						cy = int(M['m01'] / M['m00'])
+						diff_x = int(front_img.shape[1] // 2 - cx)
+						diff_y = int(front_img.shape[0] // 2 - cy)
+						return diff_y * 5, diff_x * 5, 0, 0
+					return 0, 0, 0, 0
+
+				for area, (c, M) in props:
+					if self.GetVertexCount(c) >= 6:
+						cx = int(M['m10'] / M['m00'])
+						cy = int(M['m01'] / M['m00'])
+						diff_x = int(front_img.shape[1] // 2 - cx)
+						diff_y = int(front_img.shape[0] // 2 - cy)
+						if abs(diff_x) > 50 or abs(diff_y) > 50:
+							return diff_y * 5, diff_x * 5, 500, 0
+						
+						self.location_set = True
+						return diff_y * 5, diff_x * 5, 0, 0
+
+				return 1000, 0, 500, 0
+
 
 	def FindRedFromImage(self, image) -> cv2.UMat:
 		# image = cv2.resize(image, (200, 150))
@@ -141,7 +174,7 @@ class M1():
 	@staticmethod
 	def GetVertexCount(contour) -> int:
 		return len(cv2.approxPolyDP(
-			contour, 0.01 * cv2.arcLength(contour, True), True
+			contour, 0.03 * cv2.arcLength(contour, True), True
 		))
 
 	@staticmethod
@@ -169,3 +202,7 @@ class M1():
 				# Not : moment -> secilen c momenti
 
 		return moment, contour
+
+	def SetMissionVehicle(self, vehicle) -> None:
+		self.arac = vehicle
+		return
