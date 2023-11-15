@@ -5,17 +5,13 @@ def joystickControl(json_joystick,vehicle):
 
     left_x = int(joystickData["LeftThumbX"])
     left_y = int(joystickData["LeftThumbY"])
-
     right_x = int(joystickData["RightThumbX"])
     right_y = int(joystickData["RightThumbY"])
     move( left_x, left_y, right_x, right_y, vehicle)
 
     arm = bool(joystickData["MenuButton"])
     disarm = bool(joystickData["BackButton"])
-    if(arm):
-        armAndDisarm(1, vehicle)
-    elif(disarm):
-        armAndDisarm(0, vehicle)
+    armAndDisarm(1 if arm else 0, vehicle)
 
     stabilize_mode=bool(joystickData["YButton"])
     depthhold_mode=bool(joystickData["XButton"])
