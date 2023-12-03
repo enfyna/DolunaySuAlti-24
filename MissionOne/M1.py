@@ -116,9 +116,9 @@ class M1():
 
 							if cy > front_img.shape[0] * 3 // 4:
 								self.current_state = State.LAND_ON_TARGET
-							return 1000, 0, 500, diff_center
+							return 1000, 0, 500, -diff_center
 
-						return 0, 0, 500, diff_center
+						return 0, 0, 500, -diff_center
 
 			case State.LAND_ON_TARGET:
 				frame = self.FindRedFromImage(bottom_img)
@@ -138,7 +138,7 @@ class M1():
 						cy = int(M['m01'] / M['m00'])
 						diff_x = int(front_img.shape[1] // 2 - cx)
 						diff_y = int(front_img.shape[0] // 2 - cy)
-						return diff_y * 5, diff_x * 5, 0, 0
+						return diff_y * 5, -diff_x * 5, 0, 0
 					return 0, 0, 0, 0
 
 				for area, (c, M) in props:
@@ -148,10 +148,10 @@ class M1():
 						diff_x = int(front_img.shape[1] // 2 - cx)
 						diff_y = int(front_img.shape[0] // 2 - cy)
 						if abs(diff_x) > 50 or abs(diff_y) > 50:
-							return diff_y * 5, diff_x * 5, 500, 0
+							return diff_y * 5, -diff_x * 5, 500, 0
 						
 						self.location_set = True
-						return diff_y * 5, diff_x * 5, 0, 0
+						return diff_y * 5, -diff_x * 5, 0, 0
 
 				return 1000, 0, 500, 0
 

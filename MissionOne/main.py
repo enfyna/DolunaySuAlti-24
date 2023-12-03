@@ -50,6 +50,8 @@ arac.Pixhawk.set_mod('ACRO')
 try:
 	while True:
 		# Gorev algoritmasını burada calıstıracagız
+		# _, cap = arac.Camera.get_front_cam()
+		# print(cap.shape)
 		move = mission.FindRed()
 		# print(f'{State(mission.current_state)}')
 
@@ -58,7 +60,7 @@ try:
 			arac.Pixhawk.hareket_et(*move, 1, 0)
 		else:
 			# print("search  move -> (0, -1000, 500, 0)")
-			arac.Pixhawk.hareket_et(0, -1000, 500, 0, 1, 0)
+			arac.Pixhawk.hareket_et(0, 1000, 500, 0, 1, 0)
 except Exception as e:
 	import traceback
 	traceback.print_exception(e)
