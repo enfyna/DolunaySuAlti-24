@@ -48,7 +48,7 @@ class ClientConn():
             self.isConnected=False
 
     def codeImage(self,frame):
-        _, encoded_frame = cv2.imencode('.jpg', frame)
+        _, encoded_frame = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
         framebase64 = base64.b64encode(encoded_frame.tobytes()).decode()
         return framebase64
 
