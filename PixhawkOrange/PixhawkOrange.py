@@ -176,18 +176,10 @@ class PixhawkOrange():
         self.master.mav.command_long_send(
             self.master.target_system,self.master.target_component,
             mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,0,
-            29,0,0,0,0,0,0)
-        pressure = self.master.recv_match(type='SCALED_PRESSURE', blocking=True)
-        pressure_abs = pressure.press_abs #hPa
-        pressure_diff = pressure.press_diff #hPa
-        temperature = pressure.temperature
-        #Depth (meters) = (Differential Pressure (hPa)) / (Density (kg/m³) * Gravity (m/s²) * 100)
-        #In this formula, 100 is used to convert hPa to Pa because 1 hPa = 100 Pa.
-        p = 1000.0
-        g = 9.83
-        depth = pressure_diff/(p*g*100)
+            178,0,0,0,0,0,0)
+        ahrs2 = self.master.recv_match(type='AHRS2', blocking=True)
         data = {
-            "pressure": depth
+            "pressure": ahrs2.altitude
         }
         return data
 
