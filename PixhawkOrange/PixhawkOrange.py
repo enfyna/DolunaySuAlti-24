@@ -81,9 +81,6 @@ class PixhawkOrange():
             sleep(i)
         return self.SUCCESS
 
-    def yunusbaligi(self):
-        ...
-
     def set_arm(self, arm : bool = True, max_try : int = 7) -> int:
         """
         (DISARM) arm = False icin arac kendini disarm eder ve komutlar calismaz
