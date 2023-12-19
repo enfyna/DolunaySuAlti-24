@@ -1,8 +1,7 @@
 from pymavlink import mavutil
 from time import sleep
-from DistanceSensor import Distance
 
-class Dolunay():
+class PixhawkOrange():
 
     SUCCESS = 0
     ERROR_OUT_OF_LOOP = 1
@@ -47,11 +46,11 @@ class Dolunay():
 
         self.master = master
 
+        hb = self.master.wait_heartbeat(blocking=True)
+        
         self.mode_map = self.master.mode_mapping()
         self.mode_map_keys = tuple(self.mode_map.keys())
         self.mode_map_values = tuple(self.mode_map.values())
-
-        hb = self.master.wait_heartbeat(blocking=True)
 
         if hb.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED:
             self.current_arm_state = 'ARM'
@@ -59,7 +58,6 @@ class Dolunay():
             self.current_arm_state = 'DISARM'
 
         self.current_mode = self.mode_map_keys[self.mode_map_values.index(hb.custom_mode)]
-        self.Distance = Distance()
         return
 
     def hareket_et(self, x, y, z, r, t = 1.0, i = 0) -> int:
@@ -82,9 +80,6 @@ class Dolunay():
             )
             sleep(i)
         return self.SUCCESS
-
-    def yunusbaligi(self):
-        ...
 
     def set_arm(self, arm : bool = True, max_try : int = 7) -> int:
         """
@@ -178,18 +173,10 @@ class Dolunay():
         self.master.mav.command_long_send(
             self.master.target_system,self.master.target_component,
             mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,0,
-            29,0,0,0,0,0,0)
-        pressure = self.master.recv_match(type='SCALED_PRESSURE', blocking=True)
-        pressure_abs = pressure.press_abs #hPa
-        pressure_diff = pressure.press_diff #hPa
-        temperature = pressure.temperature
-        #Depth (meters) = (Differential Pressure (hPa)) / (Density (kg/m³) * Gravity (m/s²) * 100)
-        #In this formula, 100 is used to convert hPa to Pa because 1 hPa = 100 Pa.
-        p = 1000.0
-        g = 9.83
-        depth = pressure_diff/(p*g*100)
+            178,0,0,0,0,0,0)
+        ahrs2 = self.master.recv_match(type='AHRS2', blocking=True)
         data = {
-            "pressure": depth
+            "pressure": ahrs2.altitude
         }
         return data
 

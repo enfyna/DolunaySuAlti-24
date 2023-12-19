@@ -16,34 +16,34 @@ class Distance():
         except:
             pass
 
-    def initilazeRightDisSensor(self):
+    def initilazeRightDisSensor(self) -> None:
         #self.rightDistance.set_speed_of_sound(1450000)
         if self.rightDistance.initialize() is False:
             print("Failed to initialize Ping Right!")
 
-    def initilazeLeftDisSensor(self):
+    def initilazeLeftDisSensor(self) -> None:
         #self.leftDistance.set_speed_of_sound(1450000)
         if self.leftDistance.initialize() is False:
             print("Failed to initialize Ping Left!")
 
-    def getRightDistance(self):
+    def getRightDistance(self) -> tuple[float, float]:
         data = self.rightDistance.get_distance()
-        return data["distance"],data["confidence"]
+        return data["distance"], data["confidence"]
 
-    def getLeftDistance(self):
+    def getLeftDistance(self) -> tuple[float, float]:
         data = self.leftDistance.get_distance()
-        return data["distance"],data["confidence"]
+        return data["distance"], data["confidence"]
 
-    def getDistance(self):
-        datal = self.leftDistance.get_distance()
-        datar = self.rightDistance.get_distance()
-        return datal["distance"],datar["distance"]
+    def getDistance(self) -> tuple[float, float]:
+        left = self.leftDistance.get_distance()
+        right = self.rightDistance.get_distance()
+        return left["distance"], right["distance"]
 
-    def getDiffDis(self):
+    def getDiffDis(self) -> float:
         """
         (-) değer sol sensor daha uzak
         (+) değer sağ sensor daha uzak
         """
-        left,right = self.getDistance()
+        left, right = self.getDistance()
         diff = right-left
         return diff
