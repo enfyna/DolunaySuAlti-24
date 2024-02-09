@@ -1,6 +1,7 @@
 from cv2 import VideoCapture, UMat
 
 class Camera():
+    SUCCESS = 0
     def __init__(self):
         try:
             self.front_cap = VideoCapture(0)

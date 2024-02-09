@@ -5,6 +5,7 @@ import json
 import cv2
 import time
 import JoystickController
+import sys
 
 class ClientConn():
     def __init__(self,port,vehicle,host=''):
@@ -14,7 +15,7 @@ class ClientConn():
         """
         if host == '':
             host = self.readIP()
-        print(host)
+        print("Connected to :"+str(host))
         self.vehicle = vehicle
         self.host = host
         self.port = port
@@ -41,7 +42,7 @@ class ClientConn():
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-           self.sock.settimeout(1)
+           self.sock.settimeout(10)
            self.sock.connect((self.host, self.port))
            print("Connected.")
            self.isConnected=True
@@ -78,7 +79,6 @@ class ClientConn():
                 print("Error: Distance data not added.Check distance sensor.")
                 self.isDistanceSended=False
 
-
     def setPixhawkData(self,pixhawkdata):
         try:
             self.addData2Json("pixhawkdata", pixhawkdata)
@@ -107,7 +107,23 @@ class ClientConn():
                 print("Error: Under Cam not added.Check camera.")
                 self.isUnderCamSended=False
 
+    def sendSizeOfData(self):
+        try:
+            sizeofdata = sys.getsizeof(self.data)
+            self.sock.send(str(sizeofdata).encode())
+            self.receiveData()
+        except (BrokenPipeError, ConnectionResetError):
+            if(self.isSended):
+                print("Server closed.")
+                self.isConnected=False
+                self.isSended=False
+        except (ConnectionRefusedError, TimeoutError):
+            print("Sunucuya bağlanılamadı veya zaman aşımı oldu.")     
+        except Exception as e:
+            print(e)
+
     def sendAllData(self):
+        self.sendSizeOfData()
         json_data = json.dumps(self.data)
         try:
             self.sock.send(json_data.encode())
@@ -119,9 +135,12 @@ class ClientConn():
                 self.isSended=False
             else:
                 self.connect()
+        except (ConnectionRefusedError, TimeoutError):
+            print("Sunucuya bağlanılamadı veya zaman aşımı oldu.")
+            self.connect()  
         except Exception as e:
-                print(e)
-                self.connect()
+            print(e)
+            self.connect()  
 
     def receiveData(self):
         response = self.sock.recv(1024)
@@ -133,8 +152,7 @@ class ClientConn():
             else:
                 JoystickController.joystickControl(response.decode(), self.vehicle)
         except Exception as e:
-           #print("HATA :"+ str(e))
-           pass
+            print(e)
 
     def close(self):
         self.sock.close()
