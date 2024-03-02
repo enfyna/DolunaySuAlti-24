@@ -3,7 +3,7 @@ import numpy as np
 import ClientGroundStation as cgs
 import Dolunay
 
-arac = Dolunay()
+arac = Dolunay.Dolunay()
 arac.Pixhawk.set_arm(True)
 
 # socket settings
