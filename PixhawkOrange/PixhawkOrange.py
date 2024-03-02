@@ -23,6 +23,7 @@ class PixhawkOrange():
             raise Exception("Bilinmeyen isletim sistemi ?")
 
         for idx in range(21):
+            # ilk önce windows yada linux portunu ara
             try:
                 master = mavutil.mavlink_connection(f'{port}{idx}')
                 master.wait_heartbeat(blocking=False)
@@ -31,6 +32,7 @@ class PixhawkOrange():
             except:
                 continue
         else:
+            # sitl portunu ara
             port = 'udp:127.0.0.1:14550'
             master = mavutil.mavlink_connection(port)
             master.wait_heartbeat(timeout = 3)
