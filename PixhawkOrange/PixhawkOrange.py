@@ -1,7 +1,14 @@
 from pymavlink import mavutil
-from time import sleep, time
+from time import time#, sleep
 
 class PixhawkOrange():
+
+    MOTOR_GUC = [
+        0.7, # X
+        0.7, # Y
+        0.7, # Z
+        0.7, # R
+    ]
 
     SUCCESS = 0
     ERROR_OUT_OF_LOOP = 1
@@ -64,25 +71,30 @@ class PixhawkOrange():
         self.boot_time = time()
         return
 
-    def hareket_et(self, x, y, z, r, t = 1.0, i = 0) -> int:
+    def hareket_et(self, X=0.0, Y=0.0, Z=0.0, R=0.0) -> int:
         """
-        x- ileri ve geri hareket,[-1000,1000] araligi(0 degeri hareket vermez)
-        y- saga ve sola hareket,[-1000,1000] araligi(0 degeri hareket vermez)
-        z- yukari ve asagi hareket,Uyarı! [0,1000] araligi(500 degeri hareket vermez)
-        r- kendi etrafinda saga ve sola hareket,[-1000,1000] araligi(0 degeri hareket vermez)
-        t- komutun kac defa gonderilecegi
-        i- her komut arası beklenecek olan sure
+        Her eksen [1.0, -1.0] arasında değer alır.
+        X - ileri ve geri hareket
+        Y - saga ve sola hareket
+        Z - yukari ve asagi hareket
+        R - kendi etrafinda saga ve sola hareket
         """
-        for _ in range(t):
-            self.master.mav.manual_control_send(
-                self.master.target_system,
-                x, #ileri,geri
-                y, #sag gitme,sol gitme
-                z, #yukari asagi default 500 degeri
-                r, #etrafinda donme
-                0  # Buton parametresi eger butona basılacaksa buton numarasina denk gelen bit degeri gonderilmeli
-            )
-            sleep(i)
+
+        motor_kuvvetleri = []
+        for i, eksen in enumerate([X,Y,Z,R]):
+            kuvvet = 0
+            if i == 2: # Z ekseni özel
+                kuvvet = 500
+                kuvvet += (eksen * 500) * self.MOTOR_GUC[i]
+            else:
+                kuvvet += (eksen * 1000) * self.MOTOR_GUC[i]
+            motor_kuvvetleri.append(kuvvet)
+
+        self.master.mav.manual_control_send(
+            self.master.target_system,
+            *motor_kuvvetleri,
+            0  # Buton parametresi eger butona basılacaksa buton numarasina denk gelen bit degeri gonderilmeli
+        )
         return self.SUCCESS
 
     def set_arm(self, arm : bool = True, max_try : int = 7) -> int:
